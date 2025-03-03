@@ -52,7 +52,7 @@ class CredentialDetailResponseSchema(BaseModel):
     user_id: int
     platform_id: int
     key: str
-    value: str
+    # value: str
     user: UserResponseSchema
     platform: PlatformResponseSchema
 

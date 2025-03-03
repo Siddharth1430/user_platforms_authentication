@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi_filter import FilterDepends
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.auth.auth import user_authenticate
-from app.database.models import User, UserIntegration, Platform, CredentialDetail
+from app.database.models import User, CredentialDetail, Platform, CredentialDetail
 from app.database.schemas import (
     CurrentUserResponseSchema,
     PlatformResponseSchema,
@@ -12,6 +13,7 @@ from app.database.schemas import (
     CredentialDetailSchema,
     CredentialDetailResponseSchema,
 )
+from app.filters.filter import PlatformFilter, UserIntegrationFilter
 from typing import List
 
 router = APIRouter(prefix="/users")
@@ -28,19 +30,38 @@ def get_current_user(current_user: User = Depends(user_authenticate)):
 
 # Get details of platforms of current user
 @router.get("/me/platforms", response_model=List[PlatformResponseSchema])
-def get_platforms(current_user: User = Depends(user_authenticate)):
+def get_platforms(
+    current_user: User = Depends(user_authenticate),
+    db: Session = Depends(get_db),
+    filters: PlatformFilter = FilterDepends(PlatformFilter),
+):
     """
     This route will get the platforms that current user is integrated with
     """
-    return current_user.platforms
+    query = db.query(Platform).filter(Platform.users.contains(current_user))
+    query = filters.filter(query)
+    query = filters.sort(query)
+    result = db.execute(query)
+
+    return result.scalars().all()
 
 
 # Get the user_integrations of current user
 @router.get(
     "/me/user_integrations", response_model=List[UserIntegrationWithDetailsSchema]
 )
-def get_user_integrations(current_user: User = Depends(user_authenticate)):
-    return current_user.credentials
+def get_user_integrations(
+    current_user: User = Depends(user_authenticate),
+    db: Session = Depends(get_db),
+    filters: UserIntegrationFilter = FilterDepends(UserIntegrationFilter),
+):
+    query = db.query(CredentialDetail).filter(
+        CredentialDetail.user_id == current_user.id
+    )
+    query = filters.filter(query)
+    query = filters.sort(query)
+    result = db.execute(query)
+    return result.scalars().all()
 
 
 @router.post("/integrate", response_model=UserIntegrationResponseSchema)
@@ -61,16 +82,16 @@ def integrate_user(
         raise HTTPException(status_code=404, detail="User or Platform not found")
 
     integration = (
-        db.query(UserIntegration)
+        db.query(CredentialDetail)
         .filter(
-            UserIntegration.user_id == integration_data.user_id,
-            UserIntegration.platform_id == integration_data.platform_id,
+            CredentialDetail.user_id == integration_data.user_id,
+            CredentialDetail.platform_id == integration_data.platform_id,
         )
         .first()
     )
 
     if not integration:
-        integration = UserIntegration(
+        integration = CredentialDetail(
             user_id=integration_data.user_id,
             platform_id=integration_data.platform_id,
             is_active=integration_data.is_active,
@@ -99,10 +120,10 @@ def add_credential(
     db: Session = Depends(get_db),
 ):
     integration = (
-        db.query(UserIntegration)
+        db.query(CredentialDetail)
         .filter(
-            UserIntegration.user_id == credential_data.user_id,
-            UserIntegration.platform_id == credential_data.platform_id,
+            CredentialDetail.user_id == credential_data.user_id,
+            CredentialDetail.platform_id == credential_data.platform_id,
         )
         .first()
     )
