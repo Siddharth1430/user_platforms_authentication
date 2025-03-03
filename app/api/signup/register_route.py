@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.post("/register")
-def register_user(user: UserSchema, db: Session = Depends(get_db)) -> User:
+def register_user(user: UserSchema, db: Session = Depends(get_db)):
     """
     This route will allow users to register
     """

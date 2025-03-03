@@ -1,16 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database.models import User, Credential, Platform
+from app.database.models import User, UserIntegration, Platform, CredentialDetail
 from app.database.connection import get_db
 from app.auth.auth import admin_authenticate
 from app.database.schemas import (
     UserResponseSchema,
+    PlatformSchema,
     PlatformResponseSchema,
-    CredentialResponseSchema,
+    UserIntegrationSchema,
+    UserIntegrationResponseSchema,
+    CurrentUserResponseSchema,
+    CredentialDetailSchema,
+    CredentialDetailResponseSchema,
 )
 from typing import List
 
-router = APIRouter()
+router = APIRouter(prefix="/admin")
 
 
 # Get details of all users:
@@ -41,7 +46,7 @@ def get_one_user(
 
 
 # Get all platforms a user is integrated with :
-@router.get("/users/{user_id}/platforms")
+@router.get("/users/{user_id}/platforms", response_model=CurrentUserResponseSchema)
 def get_platforms_for_user(
     user_id: int,
     admin: User = Depends(admin_authenticate),
@@ -54,11 +59,7 @@ def get_platforms_for_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    platforms_list = []
-    for platform in user.platforms:
-        platforms_list.append({"id": platform.id, "name": platform.name})
-
-    return {"user_id": user.id, "platforms": platforms_list}
+    return user
 
 
 # Get details of one platform
@@ -81,23 +82,77 @@ def get_one_platform(
 # Get the credentials of a user for a specific platform
 @router.get(
     "/users/{user_id}/{platform_id}/credentials",
-    response_model=CredentialResponseSchema,
+    response_model=UserIntegrationResponseSchema,
 )
 def get_credentials(
     user_id: int,
     platform_id: int,
     admin: User = Depends(admin_authenticate),
     db: Session = Depends(get_db),
-) -> Credential:
+) -> UserIntegration:
     """
     This route will return the credentials of a user of a specific platform
     """
     credential = (
-        db.query(Credential)
-        .filter(Credential.user_id == user_id, Credential.platform_id == platform_id)
+        db.query(UserIntegration)
+        .filter(
+            UserIntegration.user_id == user_id,
+            UserIntegration.platform_id == platform_id,
+        )
         .first()
     )
     if not credential:
         raise HTTPException(status_code=404, detail="Credentials not found")
 
     return credential
+
+
+# Create a platform
+@router.post("/platforms/", response_model=PlatformResponseSchema)
+def add_platform(
+    platform_data: PlatformSchema,
+    admin: User = Depends(admin_authenticate),
+    db: Session = Depends(get_db),
+):
+    platform = Platform(name=platform_data.name, description=platform_data.description)
+    db.add(platform)
+    db.commit()
+
+    return platform
+
+
+@router.post("/user-integrations", response_model=UserIntegrationResponseSchema)
+def assign_user_to_platform(
+    integration_data: UserIntegrationSchema,
+    admin: User = Depends(admin_authenticate),
+    db: Session = Depends(get_db),
+):
+    integration = UserIntegration(
+        user_id=integration_data.user_id, platform_id=integration_data.platform_id
+    )
+    db.add(integration)
+    db.commit()
+
+    return integration
+
+
+@router.post("/credentials/", response_model=CredentialDetailResponseSchema)
+def add_credential(
+    credential_data: CredentialDetailSchema,
+    admin: User = Depends(get_db),
+    db: Session = Depends(get_db),
+):
+    credential = CredentialDetail(
+        user_id=credential_data.user_id,
+        platform_id=credential_data.platform_id,
+        key=credential_data.key,
+        value=credential_data.value,
+    )
+    db.add(credential)
+    db.commit()
+
+    return credential
+
+
+# @router.post("/platform",status_code=201)
+# def add_platform()

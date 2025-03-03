@@ -28,7 +28,7 @@ class User(Base):
         "Platform", secondary=user_platform, back_populates="users"
     )
     # One-to-Many relationship with table credentials
-    credentials = relationship("Credential", back_populates="user")
+    credentials = relationship("UserIntegration", back_populates="user")
 
 
 class Platform(Base):
@@ -41,32 +41,50 @@ class Platform(Base):
     # Many-to-Many relationship with table users
     users = relationship("User", secondary=user_platform, back_populates="platforms")
     # One-to-Many relationship with table credentials
-    credentials = relationship("Credential", back_populates="platform")
+    credentials = relationship("UserIntegration", back_populates="platform")
 
 
-class Credential(Base):
-    __tablename__ = "credentials"
+class UserIntegration(Base):
+    __tablename__ = "user_integrations"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     platform_id = Column(Integer, ForeignKey("platforms.id"), nullable=False)
+    is_active = Column(Boolean, default=True)
 
     # Many-to-One relationship with table users
     user = relationship("User", back_populates="credentials")
     # Many-to-One relationship with table platforms
     platform = relationship("Platform", back_populates="credentials")
 
-    details = relationship(
-        "CredentialDetail", back_populates="credential", cascade="all,delete-orphan"
-    )
+    details = relationship("CredentialDetail", back_populates="credential")
 
 
 class CredentialDetail(Base):
     __tablename__ = "credential_details"
 
     id = Column(Integer, primary_key=True)
-    credential_id = Column(Integer, ForeignKey("credentials.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    platform_id = Column(Integer, ForeignKey("platforms.id"))
+    integration_id = Column(Integer, ForeignKey("user_integrations.id"), nullable=False)
     key = Column(String, nullable=False)
     value = Column(String, nullable=False)
 
-    credential = relationship("Credential", back_populates="details")
+    credential = relationship("UserIntegration", back_populates="details")
+
+
+# class PlatformCredentials(Base):
+#     __tablename__ = "platformcredentials"
+
+#     id = Column(Integer, primary_key=True)
+#     platform_id = Column(Integer, ForeignKey("platforms.id"), nullable=False)
+#     credential_name = Column(String, nullable=False)
+#     is_required = Column(Boolean, default=False)
+
+# class StoreCredential(Base):
+#     __tablename__ = "storecredentials"
+#     id = Column(Integer,primary_key=True)
+#     user_id = Column(Integer,ForeignKey("users.id"))
+#     platform_id = Column(Integer,ForeignKey("platforms.id"))
+#     key = Column(String,ForeignKey("platformcredentials.id"))
+#     value = Column(String,nullable=False)

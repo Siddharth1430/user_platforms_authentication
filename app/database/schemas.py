@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 class UserSchema(BaseModel):
@@ -11,8 +11,12 @@ class UserSchema(BaseModel):
 class UserResponseSchema(BaseModel):
     id: int
     username: str
-    password: str
     is_admin: bool
+
+
+class PlatformSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
 
 
 class PlatformResponseSchema(BaseModel):
@@ -21,6 +25,44 @@ class PlatformResponseSchema(BaseModel):
     description: Optional[str] = None
 
 
-class CredentialResponseSchema(BaseModel):
+class UserIntegrationSchema(BaseModel):
     user_id: int
     platform_id: int
+    is_active: bool
+
+
+class UserIntegrationResponseSchema(BaseModel):
+    id: int
+    user_id: int
+    platform_id: int
+    is_active: bool
+    user: UserResponseSchema
+    platform: PlatformResponseSchema
+
+
+class CredentialDetailSchema(BaseModel):
+    user_id: int
+    platform_id: int
+    key: str
+    value: str
+
+
+class CredentialDetailResponseSchema(BaseModel):
+    id: int
+    user_id: int
+    platform_id: int
+    key: str
+    value: str
+    user: UserResponseSchema
+    platform: PlatformResponseSchema
+
+
+class CurrentUserResponseSchema(BaseModel):
+    username: str
+    platforms: List[PlatformResponseSchema]
+
+
+class UserIntegrationWithDetailsSchema(BaseModel):
+    id: int
+    platform: PlatformResponseSchema
+    details: List[CredentialDetailSchema]
