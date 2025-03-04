@@ -26,9 +26,36 @@ class PlatformResponseSchema(BaseModel):
 
 
 class UserIntegrationSchema(BaseModel):
+    # user_id: int
+    platform_id: int
+    is_active: bool
+
+
+class AdminIntegrationSchema(BaseModel):
     user_id: int
     platform_id: int
     is_active: bool
+
+
+class AdminCredentialDetailSchema(BaseModel):
+    user_id: int
+    platform_id: int
+
+    key: str
+    value: str
+
+
+class CredentialDetailSchema(BaseModel):
+    # user_id: int
+    platform_id: int
+
+    key: str
+    value: str
+
+
+class CredentialIntegration(BaseModel):
+    integration_data: UserIntegrationSchema
+    credentials: List[CredentialDetailSchema]
 
 
 class UserIntegrationResponseSchema(BaseModel):
@@ -38,13 +65,6 @@ class UserIntegrationResponseSchema(BaseModel):
     is_active: bool
     user: UserResponseSchema
     platform: PlatformResponseSchema
-
-
-class CredentialDetailSchema(BaseModel):
-    user_id: int
-    platform_id: int
-    key: str
-    value: str
 
 
 class CredentialDetailResponseSchema(BaseModel):

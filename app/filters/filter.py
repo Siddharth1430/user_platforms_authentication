@@ -4,6 +4,10 @@ from app.database.models import Platform, CredentialDetail, CredentialDetail, Us
 
 
 class UserFilter(Filter):
+    """
+    Defines filtering options for querying users.
+    """
+
     username__ilike: Optional[str]
     is_admin: Optional[bool]
     order_by: Optional[List[str]]
@@ -13,6 +17,10 @@ class UserFilter(Filter):
 
 
 class PlatformFilter(Filter):
+    """
+    Defines filtering options for querying platforms
+    """
+
     name__ilike: Optional[str]
     description__ilike: Optional[str]
     order_by: Optional[List[str]]
@@ -22,6 +30,10 @@ class PlatformFilter(Filter):
 
 
 class UserIntegrationFilter(Filter):
+    """
+    Provides filters for user integrations.
+    """
+
     is_active: Optional[bool]
     order_by: Optional[List[str]]
 
@@ -30,6 +42,10 @@ class UserIntegrationFilter(Filter):
 
 
 class CredentialDetailFilter(Filter):
+    """
+    Defines filters for credential details.
+    """
+
     user_id: Optional[int]
     platform_id: Optional[int]
     key: Optional[str]

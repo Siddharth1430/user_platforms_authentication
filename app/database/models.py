@@ -15,6 +15,10 @@ user_platform = Table(
 
 
 class User(Base):
+    """
+    Represents a user in the system.
+    """
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
@@ -32,6 +36,10 @@ class User(Base):
 
 
 class Platform(Base):
+    """
+    Represents a platform that users can be associated with.
+    """
+
     __tablename__ = "platforms"
 
     id = Column(Integer, primary_key=True)
@@ -45,6 +53,10 @@ class Platform(Base):
 
 
 class UserIntegration(Base):
+    """
+    Links users to platforms, defining their integration status.
+    """
+
     __tablename__ = "user_integrations"
 
     id = Column(Integer, primary_key=True)
@@ -61,6 +73,10 @@ class UserIntegration(Base):
 
 
 class CredentialDetail(Base):
+    """
+    Stores user credentials for platform integrations.
+    """
+
     __tablename__ = "credential_details"
 
     id = Column(Integer, primary_key=True)
